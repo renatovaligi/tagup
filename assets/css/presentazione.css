@@ -32,7 +32,7 @@
 
 .evo-sec { background: radial-gradient(60% 70% at 85% 20%, rgba(255,90,31,.16), transparent 70%), #0f1a27; }
 .evo .tagline { display: inline-flex; align-items: center; gap: .7rem; font: 500 .78rem/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 1.4rem; padding: 0; border: 0; background: transparent !important; } .evo .tagline::before { content: ""; width: 28px; height: 2px; background: var(--accent); }
-.evo h1 { font-family: var(--font-display); font-weight: 700; text-transform: none; letter-spacing: -.03em; line-height: .98; font-size: clamp(2.8rem, 7.4vw, 6.4rem); }
+.evo h1 { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: -.01em; line-height: .96; font-size: clamp(2.3rem, 4.7vw, 4.2rem); }
 .evo h1 .hl { color: var(--accent); }
 .evo__tabs button, .tu__side { font-family: var(--font-display); text-transform: none; }
 .evo__box { border-radius: 24px; }
@@ -40,3 +40,5 @@
 .soon { font-family: var(--font-mono); border-radius: 99px; }
 .skill-card { border-radius: 24px; }
 .btn.pres-mail { margin-top: .4rem; }
+@media (min-width: 980px) { .evo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } } .evo__tabs button { white-space: nowrap; }
+.evo-sec { padding-top: calc(var(--header-h) + 2.5rem); }
