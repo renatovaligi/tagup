@@ -386,9 +386,62 @@ a { color: inherit; }
       ctx.restore();
     }
   }
+  /* ---------- Jarvis: anelli, tacche, mirino, ECG e testo di avvio attorno alla sfera ---------- */
+  var BOOT = ['AGGANCIO I SENSORI DEL CAMPO', 'CARICO SOCIETÀ E PARTITE', 'CALCOLO GLI INDICATORI', 'SALA CONTROLLO PRONTA'];
+  function jarvis(cx, cy, R, t, al, withText) {
+    if (al <= 0) return;
+    var Ro = R * 1.14, TAU = 6.2832, a0 = -1.5708;
+    ctx.save(); ctx.globalAlpha *= al; ctx.lineCap = 'butt';
+    /* anello esterno puntinato */
+    ctx.strokeStyle = 'rgba(244,241,234,' + (.3 * eo(seg(t, .1, .7))) + ')'; ctx.lineWidth = 1; ctx.setLineDash([2, 6]);
+    ctx.beginPath(); ctx.arc(cx, cy, Ro, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    /* tacche */
+    var tk = eo(seg(t, .6, 1.4));
+    if (tk > 0) for (var i = 0; i < 72; i++) {
+      var a = i * 5 * Math.PI / 180, m = i % 6 === 0, r1 = Ro * (m ? .93 : .96), c = Math.cos(a), sn = Math.sin(a);
+      ctx.strokeStyle = m ? 'rgba(255,90,31,' + (.9 * tk) + ')' : 'rgba(255,90,31,' + (.45 * tk) + ')'; ctx.lineWidth = m ? 1.6 : 1;
+      ctx.beginPath(); ctx.moveTo(cx + c * r1, cy + sn * r1); ctx.lineTo(cx + c * Ro, cy + sn * Ro); ctx.stroke();
+    }
+    /* anello principale che si disegna, poi ruota piano */
+    var d1 = eo(seg(t, .2, 1.5)), rot = t * .45;
+    ctx.strokeStyle = C.red; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, Ro * .915, a0 + rot, a0 + rot + TAU * d1); ctx.stroke();
+    /* anello tratteggiato in senso inverso */
+    ctx.strokeStyle = 'rgba(255,42,42,.5)'; ctx.lineWidth = 2; ctx.setLineDash([6, 10]); ctx.lineDashOffset = t * 14;
+    ctx.beginPath(); ctx.arc(cx, cy, Ro * .86, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    /* arco di scansione */
+    var sc = eo(seg(t, .5, 1.2)), sa = t * 1.9;
+    ctx.strokeStyle = 'rgba(255,90,31,' + sc + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, Ro * .80, sa, sa + .55); ctx.stroke();
+    /* mirino */
+    var cr = eo(seg(t, .8, 1.6)); ctx.strokeStyle = 'rgba(244,241,234,' + (.38 * cr) + ')'; ctx.lineWidth = 1;
+    for (var q = 0; q < 4; q++) { var qa = q * Math.PI / 2, qc = Math.cos(qa), qs = Math.sin(qa); ctx.beginPath(); ctx.moveTo(cx + qc * Ro * 1.0, cy + qs * Ro * 1.0); ctx.lineTo(cx + qc * Ro * 1.045, cy + qs * Ro * 1.045); ctx.stroke(); }
+    /* ECG in basso dentro l'anello */
+    var eg = eo(seg(t, 1.0, 2.4));
+    if (eg > 0) {
+      var ex = cx - Ro * .46, ew = Ro * .92, ey = cy + Ro * .66, ph = (t * .5) % 1;
+      ctx.save(); ctx.beginPath(); ctx.rect(ex, ey - Ro * .14, ew * eg, Ro * .28); ctx.clip();
+      ctx.strokeStyle = 'rgba(244,241,234,.5)'; ctx.lineWidth = 1.4; ctx.lineJoin = 'miter'; ctx.beginPath();
+      for (var k = 0; k <= 60; k++) {
+        var u = k / 60, v = ((u * 2 - ph * 2) % 1 + 1) % 1, y = 0;
+        if (v > .30 && v < .34) y = -(v - .30) / .04 * .45; else if (v >= .34 && v < .38) y = -.45 + (v - .34) / .04 * 1.3; else if (v >= .38 && v < .42) y = .85 - (v - .38) / .04 * .85;
+        var px = ex + u * ew, py = ey - y * Ro * .12; k ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      }
+      ctx.stroke(); ctx.restore();
+    }
+    /* testo di avvio */
+    if (withText) {
+      var bi = -1; for (var j = 0; j < 4; j++) if (t >= .5 + j * .85) bi = j;
+      if (bi >= 0) {
+        var fa = eo(seg(t, .5 + bi * .85, .8 + bi * .85)), fs = Math.max(10, Math.min(13, Math.min(W, H) * .016)), ty = Math.min(BOT - 2, cy + Ro + fs * 2.6);
+        ctx.save(); ctx.globalAlpha *= fa; ctx.font = '500 ' + fs + 'px ui-monospace,Menlo,Consolas,monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = bi === 3 ? C.red : 'rgba(244,241,234,.62)'; ctx.fillText(BOOT[bi], cx, ty); ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
   function sceneR() { return Math.min(W * .34, (BOT - TOP) * .38); }
   function scene4(s) {
     var R = sceneR(), cx = W / 2, cy = Y(.5);
+    jarvis(cx, cy, R, s, 1 - .0 * s, true);
     var amp = .2 * eio(seg(s, 1.0, 1.9)) * (1 - eio(seg(s, 1.9, 2.6)));
     var ball = eio(seg(s, 1.9, 2.7)), lk = eio(seg(s, 3.1, 4.0));
     drawSphere(cx, cy, R, s, { assemble: true, amp: amp, mul: 1, ball: ball, logoK: lk, ptA: 1 - .4 * ball * (1 - lk) });
@@ -401,6 +454,7 @@ a { color: inherit; }
     var e = eio(seg(s, 0, .8)), titleY = Y(.6), cy0 = Y(.5), R = sceneR();
     var lw = Math.max(R * 2 * (1 - e) + e * Math.min(100, Math.max(50, (BOT - TOP) * .14)), 44), ly = lerp(cy0, Y(.2), e);
     ctx.globalCompositeOperation = 'lighter'; var g = ctx.createRadialGradient(cx, ly, 0, cx, ly, lw * 1.4); g.addColorStop(0, 'rgba(255,90,31,.38)'); g.addColorStop(1, 'rgba(255,42,42,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, ly, lw * 1.4, 0, 6.283); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+    jarvis(cx, cy0, R, 4.4 + s, 1 - eio(seg(s, 0, .7)), false);
     drawMark(cx, ly, lw, {});
     var L = ["L'EVOLUZIONE", 'DEL DATO.'];
     ctx.font = '900 100px ' + F; var wmax = Math.max(ctx.measureText(L[0]).width, ctx.measureText(L[1]).width), f2 = Math.min(fs, 100 * W * .88 / wmax);
