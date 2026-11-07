@@ -328,14 +328,15 @@ html.tgjv-brand .brand .mark{opacity:0}.brand .mark{transition:opacity .25s ease
     P4.push({ x: Math.cos(th) * rr, y: yy, z: Math.sin(th) * rr, sx: (r4() - .5) * 4.4, sy: (r4() - .5) * 3.2, sz: (r4() - .5) * 2.4, d: r4() * .9, lx: lg[0] * .98 + (r4() - .5) * .02, ly: lg[1] * .98 + (r4() - .5) * .02, lz: (r4() - .5) * .06, seam: false, ink: r4() < .3 });
   }
   for (i = 0; i < N4; i++) { var q4 = P4[i]; q4.seam = Math.abs(q4.x) < .1 || Math.abs(q4.y) < .1 || Math.abs(Math.abs(q4.x) - .62) < .08; }
-  var ptr = { x: 0, y: 0, tx: 0, ty: 0 };
+  var ptr = { x: 0, y: 0, tx: 0, ty: 0, px: 0, py: 0, sx: 0, sy: 0, a: 0, ta: 0 };
+  var tc = document.createElement('canvas'), tcx = tc.getContext('2d');
 
   function resize() {
     var r = cv.getBoundingClientRect();
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = r.width; H = r.height; measure();
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); tc.width = cv.width; tc.height = cv.height;
   }
 
   /* ---------- sfondo: puntini e campo da basket ---------- */
@@ -361,10 +362,21 @@ html.tgjv-brand .brand .mark{opacity:0}.brand .mark{transition:opacity .25s ease
   function bg(T) {
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(244,241,234,.045)'; var g = 48;
+    ctx.fillStyle = 'rgba(244,241,234,.03)'; var g = 48;
     for (var x = 0; x < W; x += g) ctx.fillRect(x, 0, 1, H);
     for (var y = 0; y < H; y += g) ctx.fillRect(0, y, W, 1);
-    court(.085);
+    court(.03);
+    var a = ptr.a; if (a < .01) return;
+    /* luce arancione che segue il puntatore, dietro ai contenuti */
+    var rl = Math.max(340, Math.min(W, H) * .6), gl = ctx.createRadialGradient(ptr.sx, ptr.sy, 0, ptr.sx, ptr.sy, rl);
+    gl.addColorStop(0, 'rgba(255,90,31,' + .2 * a + ')'); gl.addColorStop(1, 'rgba(255,90,31,0)'); ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H);
+    /* il campo si vede quasi solo nel raggio del puntatore */
+    var rc = Math.max(240, Math.min(W, H) * .42), ctxM = ctx;
+    tcx.setTransform(dpr, 0, 0, dpr, 0, 0); tcx.globalCompositeOperation = 'source-over'; tcx.clearRect(0, 0, W, H);
+    ctx = tcx; court(.62); ctx = ctxM;
+    tcx.globalCompositeOperation = 'destination-in'; var cg = tcx.createRadialGradient(ptr.sx, ptr.sy, 0, ptr.sx, ptr.sy, rc);
+    cg.addColorStop(0, 'rgba(0,0,0,' + a + ')'); cg.addColorStop(1, 'rgba(0,0,0,0)'); tcx.fillStyle = cg; tcx.fillRect(0, 0, W, H);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(tc, 0, 0); ctx.restore();
   }
   function vignette() {
   }
@@ -542,27 +554,39 @@ html.tgjv-brand .brand .mark{opacity:0}.brand .mark{transition:opacity .25s ease
     }
   }
   function sceneR() { return Math.min(W * .34, (BOT - TOP) * .38); }
-  /* tabellone a celle: ogni cella prende il colore del logo nel punto in cui si trova */
-  var MC = 46, MR = Math.round(MC * MB.h / MB.w), MASK = [];
-  (function () {
-    var oc = document.createElement('canvas'); oc.width = MC; oc.height = MR; var o = oc.getContext('2d');
-    o.scale(MC / MB.w, MR / MB.h); o.translate(-MB.x, -MB.y); MP.forEach(function (p, i) { o.fillStyle = MARK[i][0]; o.fill(p.p); });
-    var d = o.getImageData(0, 0, MC, MR).data, rr = rng(5);
-    for (var y = 0; y < MR; y++) for (var x = 0; x < MC; x++) { var k = (y * MC + x) * 4, a = d[k + 3]; MASK.push({ x: x, y: y, on: a > 120, c: 'rgb(' + d[k] + ',' + d[k + 1] + ',' + d[k + 2] + ')', r: rr(), r2: rr(), dist: Math.hypot(x - MC / 2, (y - MR / 2) * 1.1) / (MC * .6) }); }
-  })();
-  function scene4(s) {
-    var R = sceneR(), cx = W / 2, cy = Y(.5), cell = R * 2 / MC, ox = cx - R, oy = cy - MR * cell / 2, sz = cell * .74;
-    var grow = eo(seg(s, .2, 1.2)), sett = seg(s, 1.9, 3.5), solid = eo(seg(s, 3.6, 4.3)), A0 = ctx.globalAlpha;
-    for (var i = 0; i < MASK.length; i++) {
-      var c = MASK[i], x = ox + c.x * cell + (cell - sz) / 2, y = oy + c.y * cell + (cell - sz) / 2;
-      var wave = cl(grow * 1.6 - c.dist * .6); if (wave <= 0) continue;
-      var flick = ((Math.floor(s * 9 + c.r * 40) % 7) / 7 + c.r2) % 1, out = cl((sett * 1.5 - c.dist * .5) * 2), al, col;
-      if (c.on) { var lit = out > .98 || flick < .5 + .5 * out; col = out > .98 ? c.c : (flick < .5 ? C.or : C.ink); al = (lit ? 1 : .22) * wave * (1 - solid); }
-      else { var lit2 = flick < .45 * (1 - out); col = flick < .2 ? C.or : C.ink; al = (lit2 ? .6 : .1) * wave * (1 - out); }
-      if (al <= .01) continue; ctx.globalAlpha = A0 * al; ctx.fillStyle = col; ctx.fillRect(x, y, sz, sz);
+  /* baricentro di ogni pezzo del logo: ogni pezzo ruota attorno al proprio centro, come ingranaggi che si incastrano */
+  var MPC = MP.map(function (m) {
+    var sx = 0, sy = 0, n = 0, g = document.createElement('canvas').getContext('2d');
+    for (var y = MB.y - 20; y < MB.y + MB.h + 20; y += 2) for (var x = MB.x - 120; x < MB.x + MB.w + 160; x += 2) if (g.isPointInPath(m.p, x, y)) { sx += x; sy += y; n++; }
+    return n ? [sx / n, sy / n] : [MB.x + MB.w / 2, MB.y + MB.h / 2];
+  });
+  function gearLogo(cx, cy, w, s) {
+    var k = w / MB.w, mx0 = MB.x + MB.w / 2, my0 = MB.y + MB.h / 2;
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-mx0, -my0);
+    for (var i = 0; i < MP.length; i++) {
+      var pk = eo(seg(s, 3.3 + i * .16, 4.15 + i * .06)); if (pk <= 0) continue;
+      var dir = i % 2 ? 1 : -1, c = MPC[i], ang = dir * (1 - pk) * 2.1, off = (1 - pk) * 46;
+      var vx = c[0] - mx0, vy = c[1] - my0, vl = Math.hypot(vx, vy) || 1;
+      ctx.save(); ctx.globalAlpha *= Math.min(1, pk * 1.6);
+      ctx.translate(c[0] + vx / vl * off, c[1] + vy / vl * off); ctx.rotate(ang); ctx.translate(-c[0], -c[1]);
+      ctx.fillStyle = MP[i].c; ctx.fill(MP[i].p); ctx.restore();
     }
-    ctx.globalAlpha = A0;
-    if (solid > 0) { ctx.save(); ctx.globalAlpha = solid; drawMark(cx, cy, R * 2, {}); ctx.restore(); }
+    ctx.restore();
+  }
+  function scene4(s) {
+    var R = sceneR(), cx = W / 2, cy = Y(.5);
+    var amp = .2 * eio(seg(s, 1.0, 1.9)) * (1 - eio(seg(s, 1.9, 2.6)));
+    var ball = eio(seg(s, 1.9, 2.7)), lk = eio(seg(s, 2.9, 3.8)), fade = 1 - eo(seg(s, 3.7, 4.25));
+    drawSphere(cx, cy, R, s, { assemble: true, amp: amp, mul: 1, ball: ball, logoK: lk, ptA: (1 - .4 * ball * (1 - lk)) * fade });
+    /* corona dentata che gira e si spegne quando il logo e' montato */
+    var ga = eo(seg(s, 3.1, 3.6)) * (1 - eo(seg(s, 4.0, 4.4)));
+    if (ga > .01) {
+      var tr = R * 1.14, n = 36, rot = s * 1.3; ctx.save(); ctx.globalAlpha *= ga; ctx.strokeStyle = C.or; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(cx, cy, tr, 0, 6.2832); ctx.stroke(); ctx.lineWidth = 2.4; ctx.beginPath();
+      for (var i = 0; i < n; i++) { var t = rot + i / n * 6.2832, c = Math.cos(t), sn = Math.sin(t); ctx.moveTo(cx + c * tr, cy + sn * tr); ctx.lineTo(cx + c * (tr + R * .07), cy + sn * (tr + R * .07)); }
+      ctx.stroke(); ctx.restore();
+    }
+    gearLogo(cx, cy, R * 2, s);
   }
 
   /* ---------- scena 5: titolo finale ---------- */
@@ -618,6 +642,7 @@ html.tgjv-brand .brand .mark{opacity:0}.brand .mark{transition:opacity .25s ease
     if (!running) return;
     var dt = Math.min(.05, (now - last) / 1000); last = now;
     ptr.x += (ptr.tx - ptr.x) * .06; ptr.y += (ptr.ty - ptr.y) * .06;
+    ptr.sx += (ptr.px - ptr.sx) * .18; ptr.sy += (ptr.py - ptr.sy) * .18; ptr.a += (ptr.ta - ptr.a) * .12;
     if (playing) T = (T + dt) % DUR;
     render(); requestAnimationFrame(tick);
   }
@@ -627,7 +652,9 @@ html.tgjv-brand .brand .mark{opacity:0}.brand .mark{transition:opacity .25s ease
   function setPlay(v) { playing = v; pp.setAttribute('aria-label', v ? 'Metti in pausa' : 'Riproduci'); pp.classList.toggle('is-paused', !v); if (!running) { render(); } }
   pp.addEventListener('click', function () { setPlay(!playing); });
   segs.forEach(function (b, k) { b.addEventListener('click', function () { T = SC[k].a + .01; if (!running) render(); }); });
-  cv.parentNode.addEventListener('pointermove', function (e) { var r = cv.getBoundingClientRect(); ptr.tx = ((e.clientX - r.left) / r.width - .5) * 2; ptr.ty = ((e.clientY - r.top) / r.height - .5) * 2; });
+  cv.parentNode.addEventListener('pointermove', function (e) { var r = cv.getBoundingClientRect(); ptr.tx = ((e.clientX - r.left) / r.width - .5) * 2; ptr.ty = ((e.clientY - r.top) / r.height - .5) * 2; if (ptr.ta < .5) { ptr.sx = e.clientX - r.left; ptr.sy = e.clientY - r.top; } ptr.px = e.clientX - r.left; ptr.py = e.clientY - r.top; ptr.ta = 1; if (!running) { ptr.sx = ptr.px; ptr.sy = ptr.py; ptr.a = 1; render(); } });
+  cv.parentNode.addEventListener('pointerleave', function () { ptr.ta = 0; if (!running) { ptr.a = 0; render(); } });
+  cv.parentNode.addEventListener('pointercancel', function () { ptr.ta = 0; });
   window.addEventListener('resize', function () { resize(); render(); });
   document.addEventListener('visibilitychange', function () { document.hidden ? stop() : start(); });
   if ('IntersectionObserver' in window) new IntersectionObserver(function (en) { visible = en[0].isIntersecting; visible ? start() : stop(); }, { threshold: 0 }).observe(cv);
