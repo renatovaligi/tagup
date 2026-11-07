@@ -114,7 +114,7 @@ body { font-family: var(--text); font-size: 16px; line-height: 1.5; background: 
 .next { padding: clamp(3.5rem, 8vw, 7rem) var(--pad); border-top: 1px solid var(--line); }
 .blocks { display: grid; gap: 1.25rem; margin-top: clamp(2.5rem, 6vw, 4.5rem); grid-template-columns: minmax(0, 1fr); }
 .blk { display: flex; flex-direction: column; gap: .7rem; min-width: 0; }
-.blk h3 { margin: .5rem 0 0; font-size: 1.7rem; line-height: 1.05; letter-spacing: .03em; }
+.blk h3 { margin: .9rem 0 0; font-size: 1.7rem; line-height: 1.05; letter-spacing: .03em; }
 .blk p { margin: 0; max-width: 40ch; }
 .scr { margin: 0; flex: 1; display: flex; flex-direction: column; gap: .9rem; padding: 1rem 1.1rem 1.2rem; background: var(--panel); border: 1px solid var(--line); border-top: 2px solid var(--line-2); }
 .scr__h { display: flex; justify-content: space-between; align-items: center; gap: .6rem; }
@@ -135,8 +135,8 @@ body { font-family: var(--text); font-size: 16px; line-height: 1.5; background: 
 .ev time { color: var(--mut); font-variant-numeric: tabular-nums; } .ev b { font: 400 1.05rem var(--display); letter-spacing: .04em; color: var(--ink); }
 @media (min-width: 900px) {
   .blocks { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto auto; column-gap: 1.25rem; row-gap: 1.75rem; }
-  .b1 { grid-column: 1 / span 7; grid-row: 1 / span 2; } .b2 { grid-column: 8 / span 5; } .b3 { grid-column: 8 / span 5; }
-  .b1 .scr { padding: 1.3rem 1.4rem 1.5rem; } .b1 h3 { font-size: clamp(2.2rem, 3.6vw, 3.2rem); }
+  .b1 { grid-column: 1 / -1; } .b2 { grid-column: 1 / span 6; } .b3 { grid-column: 7 / span 6; } .b2 .scr, .b3 .scr { flex: 1; }
+  .b1 .scr { padding: 1.3rem 1.4rem 1.5rem; } 
   .b1 .tg { min-height: 6.2rem; } .b1 .kv { font-size: 4rem; }
 }
 @media (max-width: 420px) { .pad { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -367,14 +367,13 @@ html.tgjv-brand .brand .mark{opacity:0}.brand .mark{transition:opacity .25s ease
     for (var sd = -1; sd <= 1; sd += 2) {
       var bx = sd * 12.425, ke = sd * 8.2;
       ctx.moveTo(sd * 14, -2.45); ctx.lineTo(ke, -2.45); ctx.lineTo(ke, 2.45); ctx.lineTo(sd * 14, 2.45);
-      ctx.moveTo(ke + (sd > 0 ? 0 : 0) + 1.8 * (sd > 0 ? 0 : 0), 0);
-      ctx.moveTo(ke - sd * 1.8 + sd * 0, 0); ctx.arc(ke, 0, 1.8, 0, 6.2832);
-      ctx.moveTo(bx + .22, 0); ctx.arc(bx, 0, .22, 0, 6.2832);
+            ctx.moveTo(ke + 1.8, 0); ctx.arc(ke, 0, 1.8, 0, 6.2832);
+      ctx.moveTo(bx + .22, 0); ctx.arc(bx, 0, .22, 0, 6.2832); ctx.moveTo(sd * 12.8, -.9); ctx.lineTo(sd * 12.8, .9);
       ctx.moveTo(sd * 14, -6.6); ctx.lineTo(sd * 11.01, -6.6); ctx.moveTo(sd * 14, 6.6); ctx.lineTo(sd * 11.01, 6.6);
       var a0 = Math.asin(6.6 / 6.75);
       if (sd > 0) { ctx.moveTo(bx - Math.cos(a0) * 6.75, -Math.sin(a0) * 6.75); ctx.arc(bx, 0, 6.75, Math.PI + a0, Math.PI - a0 + 6.2832 - 6.2832 + 0, true); }
       else { ctx.moveTo(bx + Math.cos(a0) * 6.75, -Math.sin(a0) * 6.75); ctx.arc(bx, 0, 6.75, -a0, a0, false); }
-      ctx.moveTo(bx - sd * 1.25, 0); ctx.arc(bx, 0, 1.25, sd > 0 ? Math.PI / 2 : -Math.PI / 2, sd > 0 ? -Math.PI / 2 : Math.PI / 2, sd < 0 ? false : false);
+      ctx.moveTo(bx, sd > 0 ? 1.25 : -1.25); ctx.arc(bx, 0, 1.25, sd > 0 ? Math.PI / 2 : -Math.PI / 2, sd > 0 ? -Math.PI / 2 : Math.PI / 2, sd < 0 ? false : false);
     }
     ctx.stroke(); ctx.restore();
   }
